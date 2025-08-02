@@ -11,6 +11,7 @@ const opcionesTalle = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
 function TallesForm() {
   const [nombres, setNombres] = useState([])
   const [nombreSeleccionado, setNombreSeleccionado] = useState('')
+  const [busqueda, setBusqueda] = useState('')
   const [numero, setNumero] = useState('')
   const [apodo, setApodo] = useState('')
   const [talleRemera, setTalleRemera] = useState('')
@@ -20,7 +21,6 @@ function TallesForm() {
   const [error, setError] = useState('')
   const [gracias, setGracias] = useState(false)
 
-  // 1. Traer nombres sin talles cargados
   useEffect(() => {
     async function fetchNombres() {
       const { data, error } = await supabase
@@ -36,23 +36,21 @@ function TallesForm() {
     fetchNombres()
   }, [])
 
-  // 2. Mostrar número y apodo al seleccionar nombre
   useEffect(() => {
-  if (!nombreSeleccionado) {
-    setNumero('')
-    setApodo('')
-    return
-  }
-  const persona = nombres.find(n => n.nombre === nombreSeleccionado)
-  setNumero(
-    persona && typeof persona.numero !== 'undefined' && persona.numero !== null
-      ? persona.numero
-      : ''
-  )
-  setApodo(persona?.apodo || '')
-}, [nombreSeleccionado, nombres])
+    if (!nombreSeleccionado) {
+      setNumero('')
+      setApodo('')
+      return
+    }
+    const persona = nombres.find(n => n.nombre === nombreSeleccionado)
+    setNumero(
+      persona && typeof persona.numero !== 'undefined' && persona.numero !== null
+        ? persona.numero
+        : ''
+    )
+    setApodo(persona?.apodo || '')
+  }, [nombreSeleccionado, nombres])
 
-  // 4. Subir comprobante a Supabase Storage
   async function handleComprobanteUpload(e) {
     const file = e.target.files[0]
     if (!file) return
@@ -70,14 +68,12 @@ function TallesForm() {
     setError('')
   }
 
-  // 5. Validar que todo esté completo
   const puedeSubir =
     nombreSeleccionado &&
     talleRemera &&
     talleShort &&
     comprobanteUrl
 
-  // 6. Update en la tabla remeras
   async function handleSubmit(e) {
     e.preventDefault()
     if (!puedeSubir) {
@@ -127,6 +123,11 @@ function TallesForm() {
     )
   }
 
+  // Filtrado de nombres según búsqueda
+  const nombresFiltrados = nombres.filter(n =>
+    n.nombre.toLowerCase().includes(busqueda.toLowerCase())
+  )
+
   return (
     <div>
       <h1
@@ -143,21 +144,32 @@ function TallesForm() {
         Formulario Talles Camisetas
       </h1>
       <form onSubmit={handleSubmit}>
-        {/* 1. Select de nombres */}
+        {/* Input de búsqueda */}
+        <input
+          type="text"
+          placeholder="Buscar nombre..."
+          value={busqueda}
+          onChange={e => setBusqueda(e.target.value)}
+          style={{ marginBottom: 8 }}
+        />
+        <div style={{ color: 'black', fontSize: '0.95em', marginTop: 2 }}>
+          Escribí tu nombre para buscarlo en la lista
+        </div>
+        {/* Select de nombres */}
         <select
           value={nombreSeleccionado}
           onChange={e => setNombreSeleccionado(e.target.value)}
         >
           <option value="">Seleccioná tu nombre</option>
-          {nombres.map(n => (
+          {nombresFiltrados.map(n => (
             <option key={n.id} value={n.nombre}>{n.nombre}</option>
           ))}
         </select>
         <div style={{ color: 'black', fontSize: '0.95em', marginTop: 2 }}>
-          Elegí tu nombre de la lista
+          Elegí tu nombre de la lista o buscá el tuyo
         </div>
 
-        {/* 2. Chequeá la info */}
+        {/* Chequeá la info */}
         {nombreSeleccionado && (
           <div
             style={{
@@ -191,7 +203,6 @@ function TallesForm() {
           </div>
         )}
 
-        {/* 3. Talle remera */}
         <select
           value={talleRemera}
           onChange={e => setTalleRemera(e.target.value)}
@@ -205,7 +216,6 @@ function TallesForm() {
           Elegí el talle de tu remera
         </div>
 
-        {/* 4. Talle short */}
         <select
           value={talleShort}
           onChange={e => setTalleShort(e.target.value)}
@@ -219,7 +229,6 @@ function TallesForm() {
           Elegí el talle de tu short
         </div>
 
-        {/* 5. Comprobante */}
         <input
           type="file"
           accept="image/*,application/pdf"
