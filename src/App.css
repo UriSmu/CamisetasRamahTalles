@@ -1,0 +1,75 @@
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: #fff; /* Fondo blanco */
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: url('/assets/foto-ramah.png') center center no-repeat;
+  background-size: contain; /* El logo se ajusta y se ve entero */
+  opacity: 0.5; /* 50% de opacidad */
+  z-index: -1;
+  pointer-events: none;
+}
+
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+form {
+  background: rgba(255,255,255,0.97); /* Opacidad más alta */
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  padding: 28px;
+  margin: 40px auto;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+input, select {
+  border: 1px solid #bbb;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 1.1rem;
+  background: #f9f9f9;
+  color: #111; /* <-- Asegura texto negro */
+  transition: border 0.2s;
+}
+
+input:focus, select:focus {
+  border-color: #4a90e2;
+  outline: none;
+}
+
+button {
+  background: #4a90e2;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-weight: bold;
+}
+
+button:hover {
+  background: #357abd;
+}
+
+@media (max-width: 600px) {
+  form {
+    max-width: 98vw;
+    padding: 12px;
+    margin: 12px;
+  }
+}
