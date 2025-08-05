@@ -84,7 +84,7 @@ function TallesForm() {
     // Obtener hora de Argentina (GMT-3)
     const now = new Date();
     // Ajustar manualmente a GMT-3 (hora de Buenos Aires, sin depender del timezone del servidor)
-    now.setHours(now.getHours() - 3);
+    now.setHours(now.getHours());
     const pad = n => n.toString().padStart(2, '0');
     const hora_pago = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
     const { error: updateError } = await supabase
