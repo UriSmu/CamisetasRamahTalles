@@ -82,18 +82,18 @@ function TallesForm() {
       return
     }
     // Obtener hora de Argentina (GMT-3)
-    const now = new Date()
-    const argentinaOffset = -3 * 60 // -180 minutos
-    const utc = now.getTime() + (now.getTimezoneOffset() * 60000)
-    const argentinaDate = new Date(utc + (argentinaOffset * 60000))
-    //const hora_pago = argentinaDate.toISOString().slice(0, 19).replace('T', ' ')
+    const now = new Date();
+    // Ajustar manualmente a GMT-3 (hora de Buenos Aires, sin depender del timezone del servidor)
+    now.setHours(now.getHours() - 3);
+    const pad = n => n.toString().padStart(2, '0');
+    const hora_pago = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
     const { error: updateError } = await supabase
       .from('remeras')
       .update({
         talle_remera: talleRemera,
         talle_short: talleShort,
         comprobante: comprobanteUrl,
-        //hora_pago,
+        hora_pago,
       })
       .eq('nombre', nombreSeleccionado)
     if (updateError) {
