@@ -81,7 +81,12 @@ function TallesForm() {
       setError('Completá todos los campos')
       return
     }
-    const hora_pago = new Date().toISOString()
+    // Obtener hora de Argentina (GMT-3)
+    const now = new Date()
+    const argentinaOffset = -3 * 60 // -180 minutos
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000)
+    const argentinaDate = new Date(utc + (argentinaOffset * 60000))
+    const hora_pago = argentinaDate.toISOString().slice(0, 19).replace('T', ' ')
     const { error: updateError } = await supabase
       .from('remeras')
       .update({
