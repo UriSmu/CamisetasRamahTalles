@@ -6,7 +6,7 @@ const supabaseUrl = 'https://nyfiozihqkrjhqcefqhd.supabase.co'
 const supabaseKey = import.meta.env.VITE_SUPABASE_KEY
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-const opcionesTalle = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+const opcionesTalle = ['S', 'M', 'L', 'XL']
 
 function TallesForm() {
   const [nombres, setNombres] = useState([])
@@ -20,6 +20,7 @@ function TallesForm() {
   const [comprobanteUrl, setComprobanteUrl] = useState('')
   const [error, setError] = useState('')
   const [gracias, setGracias] = useState(false)
+  const [imagenGrande, setImagenGrande] = useState(null)
 
   useEffect(() => {
     async function fetchNombres() {
@@ -80,12 +81,14 @@ function TallesForm() {
       setError('Completá todos los campos')
       return
     }
+    const hora_pago = new Date().toISOString()
     const { error: updateError } = await supabase
       .from('remeras')
       .update({
         talle_remera: talleRemera,
         talle_short: talleShort,
         comprobante: comprobanteUrl,
+        hora_pago,
       })
       .eq('nombre', nombreSeleccionado)
     if (updateError) {
@@ -93,6 +96,13 @@ function TallesForm() {
       return
     }
     setGracias(true)
+  }
+
+  function handleOtroTalle() {
+    const mensaje = encodeURIComponent(
+      'Hola. No logro encontrar mi talle. Necesito talle ___'
+    )
+    window.open(`https://wa.me/5491123895698?text=${mensaje}`, '_blank')
   }
 
   if (gracias) {
@@ -123,7 +133,6 @@ function TallesForm() {
     )
   }
 
-  // Filtrado de nombres según búsqueda
   const nombresFiltrados = nombres.filter(n =>
     n.nombre.toLowerCase().includes(busqueda.toLowerCase())
   )
@@ -144,18 +153,6 @@ function TallesForm() {
         Formulario Talles Camisetas
       </h1>
       <form onSubmit={handleSubmit}>
-        {/* Input de búsqueda */}
-        <input
-          type="text"
-          placeholder="Buscar nombre..."
-          value={busqueda}
-          onChange={e => setBusqueda(e.target.value)}
-          style={{ marginBottom: 8 }}
-        />
-        <div style={{ color: 'black', fontSize: '0.95em', marginTop: 2 }}>
-          Escribí tu nombre para buscarlo en la lista
-        </div>
-        {/* Select de nombres */}
         <select
           value={nombreSeleccionado}
           onChange={e => setNombreSeleccionado(e.target.value)}
@@ -166,10 +163,19 @@ function TallesForm() {
           ))}
         </select>
         <div style={{ color: 'black', fontSize: '0.95em', marginTop: 2 }}>
-          Elegí tu nombre de la lista o buscá el tuyo
+          Elegí tu nombre de la lista
+        </div>
+        <input
+          type="text"
+          placeholder="No lo encontrás? Buscalo acá..."
+          value={busqueda}
+          onChange={e => setBusqueda(e.target.value)}
+          style={{ marginBottom: 8, marginTop: 8 }}
+        />
+        <div style={{ color: 'black', fontSize: '0.95em', marginTop: 2 }}>
+          Escribí tu nombre para buscarlo en la lista
         </div>
 
-        {/* Chequeá la info */}
         {nombreSeleccionado && (
           <div
             style={{
@@ -196,10 +202,88 @@ function TallesForm() {
                 fontSize: '0.95em',
                 cursor: 'pointer'
               }}
-              onClick={() => window.open('https://wa.me/5491123895698', '_blank')}
+              onClick={() => {
+                const mensaje = encodeURIComponent(
+                  `Hola. Soy ${nombreSeleccionado}. Mis datos están mal: `
+                );
+                window.open(`https://wa.me/5491123895698?text=${mensaje}`, '_blank');
+              }}
             >
               ¿La info está mal? Avisá por WhatsApp
             </button>
+          </div>
+        )}
+
+        <div
+          style={{
+            background: '#fff',
+            borderRadius: 10,
+            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+            padding: 12,
+            margin: '18px 0 8px 0',
+            fontSize: '1em'
+          }}
+        >
+          <div style={{ fontWeight: 'bold', marginBottom: 8 }}>
+            Para medir tu talle, usá una remera/short que te quede cómodo. Estiralo bien, y medilo como en la imágen.
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div>
+              <img
+                src="/assets/tabla-remera.png"
+                alt="Tabla de talles remera"
+                style={{
+                  maxWidth: '100%',
+                  marginBottom: 8,
+                  borderRadius: 8,
+                  border: '1px solid #ddd',
+                  cursor: 'zoom-in'
+                }}
+                onClick={() => setImagenGrande('/assets/tabla-remera.png')}
+              />
+            </div>
+            <div>
+              <img
+                src="/assets/tabla-short.png"
+                alt="Tabla de talles short"
+                style={{
+                  maxWidth: '100%',
+                  marginBottom: 8,
+                  borderRadius: 8,
+                  border: '1px solid #ddd',
+                  cursor: 'zoom-in'
+                }}
+                onClick={() => setImagenGrande('/assets/tabla-short.png')}
+              />
+            </div>
+          </div>
+        </div>
+
+        {imagenGrande && (
+          <div
+            onClick={() => setImagenGrande(null)}
+            style={{
+              position: 'fixed',
+              top: 0, left: 0, right: 0, bottom: 0,
+              background: 'rgba(0,0,0,0.7)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+              cursor: 'zoom-out'
+            }}
+          >
+            <img
+              src={imagenGrande}
+              alt="Tabla grande"
+              style={{
+                maxWidth: '90vw',
+                maxHeight: '90vh',
+                borderRadius: 12,
+                boxShadow: '0 4px 32px rgba(0,0,0,0.25)',
+                background: '#fff'
+              }}
+            />
           </div>
         )}
 
@@ -228,6 +312,23 @@ function TallesForm() {
         <div style={{ color: 'black', fontSize: '0.95em', marginTop: 2 }}>
           Elegí el talle de tu short
         </div>
+        <button
+            type="button"
+            onClick={handleOtroTalle}
+            style={{
+              marginTop: 18,
+              background: '#25d366',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 6,
+              padding: '8px 16px',
+              fontSize: '1em',
+              cursor: 'pointer',
+              width: '100%'
+            }}
+          >
+            Necesito otro talle
+          </button>
 
         <input
           type="file"
