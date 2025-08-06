@@ -52,22 +52,28 @@ function TallesForm() {
     setApodo(persona?.apodo || '')
   }, [nombreSeleccionado, nombres])
 
-  async function handleComprobanteUpload(e) {
-    const file = e.target.files[0]
-    if (!file) return
-    const fileName = `${nombreSeleccionado}-${Date.now()}-${file.name}`
-    const { data, error } = await supabase.storage
-      .from('comprobantes')
-      .upload(fileName, file)
-    if (error) {
-      setError('Error subiendo comprobante')
-      return
-    }
-    const url = supabase.storage.from('comprobantes').getPublicUrl(fileName).data.publicUrl
-    setComprobanteUrl(url)
-    setComprobante(file)
-    setError('')
+  function limpiarNombre(nombre) {
+  if (!nombre) return 'sin-nombre'
+  return nombre.trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '')
+}
+
+async function handleComprobanteUpload(e) {
+  const file = e.target.files[0]
+  if (!file) return
+  const nombreLimpio = limpiarNombre(nombreSeleccionado)
+  const fileName = `${nombreLimpio}-${Date.now()}-${file.name}`
+  const { data, error } = await supabase.storage
+    .from('comprobantes')
+    .upload(fileName, file)
+  if (error) {
+    setError('Error subiendo comprobante')
+    return
   }
+  const url = supabase.storage.from('comprobantes').getPublicUrl(fileName).data.publicUrl
+  setComprobanteUrl(url)
+  setComprobante(file)
+  setError('')
+}
 
   const puedeSubir =
     nombreSeleccionado &&
