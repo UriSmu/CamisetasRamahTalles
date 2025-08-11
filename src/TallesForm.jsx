@@ -63,13 +63,13 @@ async function handleComprobanteUpload(e) {
   const nombreLimpio = limpiarNombre(nombreSeleccionado)
   const fileName = `${nombreLimpio}-${Date.now()}-${file.name}`
   const { data, error } = await supabase.storage
-    .from('comprobantes')
+    .from('comprobantes2')
     .upload(fileName, file)
   if (error) {
     setError('Error subiendo comprobante')
     return
   }
-  const url = supabase.storage.from('comprobantes').getPublicUrl(fileName).data.publicUrl
+  const url = supabase.storage.from('comprobantes2').getPublicUrl(fileName).data.publicUrl
   setComprobanteUrl(url)
   setComprobante(file)
   setError('')
