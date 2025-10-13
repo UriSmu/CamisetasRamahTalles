@@ -6,7 +6,10 @@ const supabaseUrl = 'https://nyfiozihqkrjhqcefqhd.supabase.co'
 const supabaseKey = import.meta.env.VITE_SUPABASE_KEY
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-const opcionesTalle = ['S', 'M', 'L', 'XL']
+function limpiarNombre(nombre) {
+  if (!nombre) return 'sin-nombre'
+  return nombre.trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '')
+}
 
 function TallesForm() {
   const [nombres, setNombres] = useState([])
@@ -14,24 +17,19 @@ function TallesForm() {
   const [busqueda, setBusqueda] = useState('')
   const [numero, setNumero] = useState('')
   const [apodo, setApodo] = useState('')
-  const [talleRemera, setTalleRemera] = useState('')
-  const [talleShort, setTalleShort] = useState('')
   const [comprobante, setComprobante] = useState(null)
   const [comprobanteUrl, setComprobanteUrl] = useState('')
   const [error, setError] = useState('')
   const [gracias, setGracias] = useState(false)
-  const [imagenGrande, setImagenGrande] = useState(null)
 
   useEffect(() => {
     async function fetchNombres() {
       const { data, error } = await supabase
         .from('remeras')
-        .select('id, nombre, numero, apodo, talle_remera, talle_short')
+        .select('id, nombre, numero, apodo, comprobante2')
       if (!error && data) {
-        const sinTalle = data.filter(
-          r => !r.talle_remera && !r.talle_short
-        )
-        setNombres(sinTalle)
+        // Solo mostrar los que NO tienen comprobante2
+        setNombres(data.filter(n => !n.comprobante2))
       }
     }
     fetchNombres()
@@ -45,41 +43,36 @@ function TallesForm() {
     }
     const persona = nombres.find(n => n.nombre === nombreSeleccionado)
     setNumero(
-      persona && typeof persona.numero !== 'undefined' && persona.numero !== null
+      persona && typeof persona?.numero !== 'undefined' && persona?.numero !== null
         ? persona.numero
         : ''
     )
     setApodo(persona?.apodo || '')
   }, [nombreSeleccionado, nombres])
 
-  function limpiarNombre(nombre) {
-  if (!nombre) return 'sin-nombre'
-  return nombre.trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '')
-}
-
-async function handleComprobanteUpload(e) {
-  const file = e.target.files[0]
-  if (!file) return
-  const nombreLimpio = limpiarNombre(nombreSeleccionado)
-  const fileName = `${nombreLimpio}-${Date.now()}-${file.name}`
-  const { data, error } = await supabase.storage
-    .from('comprobantes2')
-    .upload(fileName, file)
-  if (error) {
-    setError('Error subiendo comprobante')
-    return
+  async function handleComprobanteUpload(e) {
+    const file = e.target.files[0]
+    if (!file) return
+    const nombreLimpio = limpiarNombre(nombreSeleccionado)
+    const fileName = `${nombreLimpio}-${Date.now()}-${file.name}`
+    const { data, error } = await supabase.storage
+      .from('comprobantes2')
+      .upload(fileName, file)
+    if (error) {
+      setError('Error subiendo comprobante')
+      return
+    }
+    const url = supabase.storage.from('comprobantes2').getPublicUrl(fileName).data.publicUrl
+    setComprobanteUrl(url)
+    setComprobante(file)
+    setError('')
   }
-  const url = supabase.storage.from('comprobantes2').getPublicUrl(fileName).data.publicUrl
-  setComprobanteUrl(url)
-  setComprobante(file)
-  setError('')
-}
 
+  // Solo permitir enviar si el nombre sigue en la lista (no tiene comprobante2)
   const puedeSubir =
     nombreSeleccionado &&
-    talleRemera &&
-    talleShort &&
-    comprobanteUrl
+    comprobanteUrl &&
+    nombres.some(n => n.nombre === nombreSeleccionado)
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -89,17 +82,14 @@ async function handleComprobanteUpload(e) {
     }
     // Obtener hora de Argentina (GMT-3)
     const now = new Date();
-    // Ajustar manualmente a GMT-3 (hora de Buenos Aires, sin depender del timezone del servidor)
     now.setHours(now.getHours());
     const pad = n => n.toString().padStart(2, '0');
-    const hora_pago = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    const hora_pago2 = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
     const { error: updateError } = await supabase
       .from('remeras')
       .update({
-        talle_remera: talleRemera,
-        talle_short: talleShort,
-        comprobante: comprobanteUrl,
-        hora_pago,
+        comprobante2: comprobanteUrl,
+        hora_pago2,
       })
       .eq('nombre', nombreSeleccionado)
     if (updateError) {
@@ -107,13 +97,6 @@ async function handleComprobanteUpload(e) {
       return
     }
     setGracias(true)
-  }
-
-  function handleOtroTalle() {
-    const mensaje = encodeURIComponent(
-      'Hola. No logro encontrar mi talle. Necesito talle ___'
-    )
-    window.open(`https://wa.me/5491123895698?text=${mensaje}`, '_blank')
   }
 
   if (gracias) {
@@ -138,7 +121,7 @@ async function handleComprobanteUpload(e) {
             fontSize: '2em'
           }}
         >
-          ¡GRACIAS POR ENVIAR TU TALLE!
+          ¡GRACIAS POR ENVIAR TU COMPROBANTE!
         </h2>
       </div>
     )
@@ -161,7 +144,7 @@ async function handleComprobanteUpload(e) {
           maxWidth: 400
         }}
       >
-        Formulario Talles Camisetas
+        Subí tu comprobante de transferencia
       </h1>
       <form onSubmit={handleSubmit}>
         <select
@@ -224,122 +207,6 @@ async function handleComprobanteUpload(e) {
             </button>
           </div>
         )}
-
-        <div
-          style={{
-            background: '#fff',
-            borderRadius: 10,
-            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-            padding: 12,
-            margin: '18px 0 8px 0',
-            fontSize: '1em'
-          }}
-        >
-          <div style={{ fontWeight: 'bold', marginBottom: 8 }}>
-            Para medir tu talle, usá una remera/short que te quede cómodo. Estiralo bien, y medilo como en la imágen.
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div>
-              <img
-                src="/assets/tabla-remera.png"
-                alt="Tabla de talles remera"
-                style={{
-                  maxWidth: '100%',
-                  marginBottom: 8,
-                  borderRadius: 8,
-                  border: '1px solid #ddd',
-                  cursor: 'zoom-in'
-                }}
-                onClick={() => setImagenGrande('/assets/tabla-remera.png')}
-              />
-            </div>
-            <div>
-              <img
-                src="/assets/tabla-short.png"
-                alt="Tabla de talles short"
-                style={{
-                  maxWidth: '100%',
-                  marginBottom: 8,
-                  borderRadius: 8,
-                  border: '1px solid #ddd',
-                  cursor: 'zoom-in'
-                }}
-                onClick={() => setImagenGrande('/assets/tabla-short.png')}
-              />
-            </div>
-          </div>
-        </div>
-
-        {imagenGrande && (
-          <div
-            onClick={() => setImagenGrande(null)}
-            style={{
-              position: 'fixed',
-              top: 0, left: 0, right: 0, bottom: 0,
-              background: 'rgba(0,0,0,0.7)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1000,
-              cursor: 'zoom-out'
-            }}
-          >
-            <img
-              src={imagenGrande}
-              alt="Tabla grande"
-              style={{
-                maxWidth: '90vw',
-                maxHeight: '90vh',
-                borderRadius: 12,
-                boxShadow: '0 4px 32px rgba(0,0,0,0.25)',
-                background: '#fff'
-              }}
-            />
-          </div>
-        )}
-
-        <select
-          value={talleRemera}
-          onChange={e => setTalleRemera(e.target.value)}
-        >
-          <option value="">Talle de remera</option>
-          {opcionesTalle.map(t => (
-            <option key={t} value={t}>{t}</option>
-          ))}
-        </select>
-        <div style={{ color: 'black', fontSize: '0.95em', marginTop: 2 }}>
-          Elegí el talle de tu remera
-        </div>
-
-        <select
-          value={talleShort}
-          onChange={e => setTalleShort(e.target.value)}
-        >
-          <option value="">Talle de short</option>
-          {opcionesTalle.map(t => (
-            <option key={t} value={t}>{t}</option>
-          ))}
-        </select>
-        <div style={{ color: 'black', fontSize: '0.95em', marginTop: 2 }}>
-          Elegí el talle de tu short
-        </div>
-        <button
-            type="button"
-            onClick={handleOtroTalle}
-            style={{
-              marginTop: 18,
-              background: '#25d366',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 6,
-              padding: '8px 16px',
-              fontSize: '1em',
-              cursor: 'pointer',
-              width: '100%'
-            }}
-          >
-            Necesito otro talle
-          </button>
 
         <input
           type="file"
