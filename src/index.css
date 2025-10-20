@@ -1,3 +1,4 @@
+/* filepath: c:\Users\devandroid\Desktop\rgds\CamisetasRamahTalles\src\index.css */
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -48,4 +49,39 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
+}
+
+input, select {
+  border: 1px solid #bbb;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 1.1rem;
+  background: #f9f9f9;
+  color: #111;
+  transition: border 0.2s;
+}
+
+input:focus, select:focus {
+  border-color: #4a90e2;
+  outline: none;
+}
+
+form {
+  background: rgba(255,255,255,0.97);
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  padding: 28px;
+  margin: 40px auto;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+@media (max-width: 600px) {
+  form {
+    max-width: 98vw;
+    padding: 12px;
+    margin: 12px;
+  }
 }

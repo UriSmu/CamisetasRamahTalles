@@ -1,3 +1,4 @@
+/* filepath: c:\Users\devandroid\Desktop\rgds\CamisetasRamahTalles\src\App.css */
 body {
   min-height: 100vh;
   margin: 0;
@@ -72,4 +73,32 @@ button:hover {
     padding: 12px;
     margin: 12px;
   }
+}
+
+.stats-container {
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.stats-container h1 {
+  color: #333;
+}
+
+.stats-container h2, .stats-container h3 {
+  color: #555;
+}
+
+.stats-container ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.stats-container ul li {
+  background: #fff;
+  margin: 5px 0;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
